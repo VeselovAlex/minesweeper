@@ -14,13 +14,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import org.jetbrains.compose.common.core.graphics.Color
-import org.jetbrains.compose.common.foundation.border
-import org.jetbrains.compose.common.foundation.clickable
-import org.jetbrains.compose.common.foundation.layout.Box
-import org.jetbrains.compose.common.ui.background
-import org.jetbrains.compose.common.ui.size
-import org.jetbrains.compose.common.ui.unit.dp
 
 fun main() = application {
     Window(
@@ -33,33 +26,21 @@ fun main() = application {
 }
 
 @Composable
-actual fun CellView(cell: Cell) {
-    val closedCellColor = Color.DarkGray
-    val openedCellColor = Color.White
-    val color = if (cell.isOpened) { openedCellColor } else { closedCellColor }
+actual fun Mine(cell: Cell) {
+    Image(
+        painter = painterResource("assets/mine.png"),
+        contentDescription = "Bomb",
+        modifier = Modifier.fillMaxSize().padding(Dp(4.0f))
+    )
+}
 
-    return Box(
-        modifier = org.jetbrains.compose.common.ui.Modifier.size(40.dp, 40.dp)
-            .background(color)
-            .border(1.dp, Color(0xDD, 0xDD, 0xDD))
-            .clickable { cell.open() }
-    ) {
-        if (cell.isOpened) {
-            if (cell.hasBomb) {
-                Image(
-                    painter = painterResource("assets/mine.png"),
-                    contentDescription = "Bomb",
-                    modifier = Modifier.fillMaxSize().padding(all = Dp(4.0f))
-                )
-            } else if (cell.bombsNear > 0) {
-                Text(
-                    text = cell.bombsNear.toString(),
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 32.sp,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        }
-    }
+@Composable
+actual fun OpenedCell(cell: Cell) {
+    Text(
+        text = cell.bombsNear.toString(),
+        textAlign = TextAlign.Center,
+        fontWeight = FontWeight.Bold,
+        fontSize = 28.sp,
+        modifier = Modifier.fillMaxSize()
+    )
 }

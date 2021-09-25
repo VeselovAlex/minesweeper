@@ -4,9 +4,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import org.jetbrains.compose.common.foundation.layout.*
+import org.jetbrains.compose.common.core.graphics.Color
+import org.jetbrains.compose.common.foundation.border
+import org.jetbrains.compose.common.foundation.clickable
+import org.jetbrains.compose.common.foundation.layout.Box
+import org.jetbrains.compose.common.foundation.layout.Column
+import org.jetbrains.compose.common.foundation.layout.Row
+import org.jetbrains.compose.common.foundation.layout.fillMaxWidth
 import org.jetbrains.compose.common.ui.Alignment
 import org.jetbrains.compose.common.ui.Modifier
+import org.jetbrains.compose.common.ui.background
+import org.jetbrains.compose.common.ui.size
+import org.jetbrains.compose.common.ui.unit.dp
 
 data class BoardOptions(val rows: Int, val columns: Int, val mines: Int)
 
@@ -73,7 +82,11 @@ class Cell(val row: Int, val column: Int, val board: Board, hasBomb: Boolean = f
 
 
 @Composable
-expect fun CellView(cell: Cell): Unit
+expect fun Mine(cell: Cell): Unit
+
+@Composable
+expect fun OpenedCell(cell: Cell): Unit
+
 
 @Composable
 fun Game() = Column(Modifier.fillMaxWidth()) {
@@ -90,7 +103,26 @@ fun Game() = Column(Modifier.fillMaxWidth()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 for (column in 0 until board.columns) {
                     val cell = board.cellAt(row, column)!!
-                    CellView(cell)
+
+                    val closedCellColor = Color.DarkGray
+                    val openedCellColor = Color.White
+                    val color = if (cell.isOpened) { openedCellColor } else { closedCellColor }
+
+                    Box(
+                        modifier = Modifier.size(40.dp, 40.dp)
+                            .background(color)
+                            .border(1.dp, Color(0xDD, 0xDD, 0xDD))
+                            .clickable { cell.open() }
+                    ) {
+                        if (cell.isOpened) {
+                            if (cell.hasBomb) {
+                                Mine(cell)
+                            } else if (cell.bombsNear > 0) {
+                                OpenedCell(cell)
+                            }
+                        }
+                    }
+
                 }
             }
         }
