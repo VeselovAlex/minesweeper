@@ -16,6 +16,7 @@ import org.jetbrains.compose.common.ui.Modifier
 import org.jetbrains.compose.common.ui.background
 import org.jetbrains.compose.common.ui.size
 import org.jetbrains.compose.common.ui.unit.dp
+import kotlin.random.Random
 
 data class BoardOptions(val rows: Int, val columns: Int, val mines: Int)
 
@@ -24,12 +25,25 @@ enum class OpenResult { SUCCESS, BOMB_EXPLODED, NOTHING }
 class Board(private val options: BoardOptions) {
     private val cells = Array(options.rows) { row ->
         Array(options.columns) { column ->
-            val hasBomb = row == column
-            Cell(row, column, this, hasBomb).apply {
-                isFlagged = row == column + 1
-                isOpened = hasBomb
-            }
+            Cell(row, column, this, false)
         }
+    }
+
+    init {
+        for (i in 1..options.mines) {
+            putBomb()
+        }
+    }
+
+    private fun putBomb() {
+        var cell: Cell
+        do {
+            // This strategy may create infinite loop, but for simplicity we can assume
+            // that mine count is small enough
+            val random = Random.nextInt(options.rows * options.columns)
+            cell = cells[random % columns][random / columns]
+        } while (cell.hasBomb)
+        cell.hasBomb = true
     }
 
     val rows: Int
@@ -40,9 +54,10 @@ class Board(private val options: BoardOptions) {
 
     fun openCell(cell: Cell): OpenResult {
         if (cell.isOpened || cell.isFlagged) return OpenResult.NOTHING
-        if (cell.hasBomb) return OpenResult.BOMB_EXPLODED
 
         cell.isOpened = true
+        if (cell.hasBomb) return OpenResult.BOMB_EXPLODED
+
         if (cell.bombsNear == 0) {
             neighborsOf(cell).forEach { if (!it.hasBomb) openCell(it) }
         }
