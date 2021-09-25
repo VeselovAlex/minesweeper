@@ -16,12 +16,14 @@ import org.jetbrains.compose.common.ui.unit.dp
 
 data class BoardOptions(val rows: Int, val columns: Int, val mines: Int)
 
-class Board(val options: BoardOptions) {
-    val cells = Array(options.rows) { row ->
+enum class OpenResult { SUCCESS, BOMB_EXPLODED }
+
+class Board(private val options: BoardOptions) {
+    private val cells = Array(options.rows) { row ->
         Array(options.columns) { column ->
             val hasBomb = row == column
             val isOpened = hasBomb
-            Cell(hasBomb, isOpened)
+            Cell(row, column, this, hasBomb, isOpened)
         }
     }
 
@@ -31,15 +33,44 @@ class Board(val options: BoardOptions) {
     val columns: Int
         get() = options.columns
 
+    fun openCell(cell: Cell): OpenResult {
+        if (cell.isOpened) return OpenResult.SUCCESS
+        if (cell.hasBomb) return OpenResult.BOMB_EXPLODED
+
+        cell.isOpened = true
+        val neighbors = neighborsOf(cell)
+        if (neighbors.none { it.hasBomb }) {
+            neighbors.forEach { if (!it.hasBomb) openCell(it) }
+        }
+
+        return OpenResult.SUCCESS
+    }
+
     fun cellAt(row: Int, column: Int) = cells.getOrNull(row)?.getOrNull(column)
+
+    fun neighborsOf(cell: Cell): List<Cell> = neighborsOf(cell.row, cell.column)
+
+    fun neighborsOf(row: Int, column: Int): List<Cell> {
+        var result = mutableListOf<Cell>();
+        cellAt(row - 1, column - 1)?.let { result.add(it) }
+        cellAt(row - 1, column)?.let { result.add(it) }
+        cellAt(row - 1, column + 1)?.let { result.add(it) }
+        cellAt(row, column - 1)?.let { result.add(it) }
+        cellAt(row, column + 1)?.let { result.add(it) }
+        cellAt(row + 1, column - 1)?.let { result.add(it) }
+        cellAt(row + 1, column)?.let { result.add(it) }
+        cellAt(row + 1, column + 1)?.let { result.add(it) }
+
+        return result
+    }
 }
 
-class Cell(hasBomb: Boolean = false, isOpened: Boolean = false) {
+class Cell(val row: Int, val column: Int, val board: Board, hasBomb: Boolean = false, isOpened: Boolean = false) {
     var hasBomb by mutableStateOf(hasBomb)
     var isOpened by mutableStateOf(isOpened)
 
     fun open() {
-        isOpened = true
+        board.openCell(this)
     }
 }
 
