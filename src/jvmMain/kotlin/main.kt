@@ -26,10 +26,10 @@ fun main() = application {
 }
 
 @Composable
-actual fun Mine(cell: Cell) {
+actual fun CellWithIcon(src: String, alt: String) {
     Image(
-        painter = painterResource("assets/mine.png"),
-        contentDescription = "Bomb",
+        painter = painterResource(src),
+        contentDescription = alt,
         modifier = Modifier.fillMaxSize().padding(Dp(4.0f))
     )
 }

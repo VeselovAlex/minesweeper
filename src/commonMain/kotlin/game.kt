@@ -19,14 +19,16 @@ import org.jetbrains.compose.common.ui.unit.dp
 
 data class BoardOptions(val rows: Int, val columns: Int, val mines: Int)
 
-enum class OpenResult { SUCCESS, BOMB_EXPLODED }
+enum class OpenResult { SUCCESS, BOMB_EXPLODED, NOTHING }
 
 class Board(private val options: BoardOptions) {
     private val cells = Array(options.rows) { row ->
         Array(options.columns) { column ->
             val hasBomb = row == column
-            val isOpened = hasBomb
-            Cell(row, column, this, hasBomb, isOpened)
+            Cell(row, column, this, hasBomb).apply {
+                isFlagged = row == column + 1
+                isOpened = hasBomb
+            }
         }
     }
 
@@ -37,7 +39,7 @@ class Board(private val options: BoardOptions) {
         get() = options.columns
 
     fun openCell(cell: Cell): OpenResult {
-        if (cell.isOpened) return OpenResult.SUCCESS
+        if (cell.isOpened || cell.isFlagged) return OpenResult.NOTHING
         if (cell.hasBomb) return OpenResult.BOMB_EXPLODED
 
         cell.isOpened = true
@@ -67,9 +69,15 @@ class Board(private val options: BoardOptions) {
     }
 }
 
-class Cell(val row: Int, val column: Int, val board: Board, hasBomb: Boolean = false, isOpened: Boolean = false) {
+class Cell(
+    val row: Int,
+    val column: Int,
+    val board: Board,
+    hasBomb: Boolean = false,
+) {
     var hasBomb by mutableStateOf(hasBomb)
-    var isOpened by mutableStateOf(isOpened)
+    var isOpened by mutableStateOf(false)
+    var isFlagged by mutableStateOf(false)
 
     val bombsNear by lazy {
         board.neighborsOf(this).count { it.hasBomb }
@@ -80,12 +88,22 @@ class Cell(val row: Int, val column: Int, val board: Board, hasBomb: Boolean = f
     }
 }
 
-
-@Composable
-expect fun Mine(cell: Cell): Unit
-
 @Composable
 expect fun OpenedCell(cell: Cell): Unit
+
+@Composable
+expect fun CellWithIcon(src: String, alt: String)
+
+
+@Composable
+fun Mine(cell: Cell) {
+    CellWithIcon(src="assets/mine.png", alt = "Bomb")
+}
+
+@Composable
+fun Flag(cell: Cell) {
+    CellWithIcon(src="assets/flag.png", alt = "Flag")
+}
 
 
 @Composable
@@ -112,7 +130,7 @@ fun Game() = Column(Modifier.fillMaxWidth()) {
                         modifier = Modifier.size(40.dp, 40.dp)
                             .background(color)
                             .border(1.dp, Color(0xDD, 0xDD, 0xDD))
-                            .clickable { cell.open() }
+                            .clickable { cell.open() } // TODO Handle flag clicks
                     ) {
                         if (cell.isOpened) {
                             if (cell.hasBomb) {
@@ -120,6 +138,8 @@ fun Game() = Column(Modifier.fillMaxWidth()) {
                             } else if (cell.bombsNear > 0) {
                                 OpenedCell(cell)
                             }
+                        } else if (cell.isFlagged) {
+                            Flag(cell)
                         }
                     }
 
@@ -128,4 +148,3 @@ fun Game() = Column(Modifier.fillMaxWidth()) {
         }
     }
 }
-

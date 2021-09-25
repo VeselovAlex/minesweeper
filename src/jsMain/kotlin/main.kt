@@ -18,9 +18,10 @@ fun main() {
     }
 }
 
+
 @Composable
-actual fun Mine(cell: Cell) {
-    Img(src="assets/mine.png", alt = "Bomb", attrs = {
+actual fun CellWithIcon(src: String, alt: String) {
+    Img(src, alt, attrs = {
         style {
             cursor("none")
             property("user-select", "none")
@@ -33,7 +34,6 @@ actual fun Mine(cell: Cell) {
 actual fun OpenedCell(cell: Cell) {
     Div (
         attrs = {
-            onClick { cell.open() }
             style {
                 property("user-select", "none")
                 fontSize(32.px)
