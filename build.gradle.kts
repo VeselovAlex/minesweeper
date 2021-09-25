@@ -31,9 +31,10 @@ kotlin {
         }
 
         val jvmMain by getting {
-             dependencies {
+            dependencies {
                 implementation(compose.desktop.currentOs)
-             }
+                implementation(compose.foundation)
+            }
         }
 
         val commonTest by getting {
