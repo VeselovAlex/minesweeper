@@ -4,15 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import org.jetbrains.compose.common.core.graphics.Color
-import org.jetbrains.compose.common.foundation.border
 import org.jetbrains.compose.common.foundation.layout.*
-import org.jetbrains.compose.common.material.Button
 import org.jetbrains.compose.common.ui.Alignment
 import org.jetbrains.compose.common.ui.Modifier
-import org.jetbrains.compose.common.ui.background
-import org.jetbrains.compose.common.ui.size
-import org.jetbrains.compose.common.ui.unit.dp
 
 data class BoardOptions(val rows: Int, val columns: Int, val mines: Int)
 
@@ -38,9 +32,8 @@ class Board(private val options: BoardOptions) {
         if (cell.hasBomb) return OpenResult.BOMB_EXPLODED
 
         cell.isOpened = true
-        val neighbors = neighborsOf(cell)
-        if (neighbors.none { it.hasBomb }) {
-            neighbors.forEach { if (!it.hasBomb) openCell(it) }
+        if (cell.bombsNear == 0) {
+            neighborsOf(cell).forEach { if (!it.hasBomb) openCell(it) }
         }
 
         return OpenResult.SUCCESS
@@ -50,7 +43,7 @@ class Board(private val options: BoardOptions) {
 
     fun neighborsOf(cell: Cell): List<Cell> = neighborsOf(cell.row, cell.column)
 
-    fun neighborsOf(row: Int, column: Int): List<Cell> {
+    private fun neighborsOf(row: Int, column: Int): List<Cell> {
         var result = mutableListOf<Cell>();
         cellAt(row - 1, column - 1)?.let { result.add(it) }
         cellAt(row - 1, column)?.let { result.add(it) }
@@ -68,6 +61,10 @@ class Board(private val options: BoardOptions) {
 class Cell(val row: Int, val column: Int, val board: Board, hasBomb: Boolean = false, isOpened: Boolean = false) {
     var hasBomb by mutableStateOf(hasBomb)
     var isOpened by mutableStateOf(isOpened)
+
+    val bombsNear by lazy {
+        board.neighborsOf(this).count { it.hasBomb }
+    }
 
     fun open() {
         board.openCell(this)
