@@ -12,11 +12,6 @@ import org.jetbrains.compose.web.css.height
 import org.jetbrains.compose.web.css.px
 import org.jetbrains.compose.web.css.width
 
-@Composable
-actual fun CellImage(cell: Cell): Unit {
-    Text("*")
-}
-
 fun main() {
     val root = document.getElementById("app-root") ?: throw RuntimeException("#app-root is missing in index.html")
 
@@ -30,7 +25,7 @@ fun main() {
 actual fun CellView(cell: Cell) {
     Div (
         attrs = {
-            onClick { cell.isOpened = !cell.isOpened }
+            onClick { cell.open() }
             style {
                 property("background", if (cell.isOpened) { "orange" } else { "steelblue" })
                 property("border", "1px solid white")

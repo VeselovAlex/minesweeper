@@ -14,36 +14,54 @@ import org.jetbrains.compose.common.ui.background
 import org.jetbrains.compose.common.ui.size
 import org.jetbrains.compose.common.ui.unit.dp
 
-class Cell(hasBomb: Boolean = false, isOpened: Boolean = false) {
-    var hasBomb by mutableStateOf(hasBomb)
-    var isOpened by mutableStateOf(isOpened)
-}
+data class BoardOptions(val rows: Int, val columns: Int, val mines: Int)
 
-
-@Composable
-expect fun CellImage(cell: Cell): Unit
-
-@Composable
-expect fun CellView(cell: Cell): Unit
-
-@Composable
-fun Game() = Column(Modifier.fillMaxWidth()) {
-    val rows = 8
-    val columns = 8
-
-    val cells = Array(rows) { row ->
-        Array(columns) { column ->
+class Board(val options: BoardOptions) {
+    val cells = Array(options.rows) { row ->
+        Array(options.columns) { column ->
             val hasBomb = row == column
             val isOpened = hasBomb
             Cell(hasBomb, isOpened)
         }
     }
 
+    val rows: Int
+        get() = options.rows;
+
+    val columns: Int
+        get() = options.columns
+
+    fun cellAt(row: Int, column: Int) = cells.getOrNull(row)?.getOrNull(column)
+}
+
+class Cell(hasBomb: Boolean = false, isOpened: Boolean = false) {
+    var hasBomb by mutableStateOf(hasBomb)
+    var isOpened by mutableStateOf(isOpened)
+
+    fun open() {
+        isOpened = true
+    }
+}
+
+
+@Composable
+expect fun CellView(cell: Cell): Unit
+
+@Composable
+fun Game() = Column(Modifier.fillMaxWidth()) {
+    val boardSettings = BoardOptions(
+        rows = 8,
+        columns = 8,
+        mines = 10,
+    )
+
+    val board = Board(boardSettings)
+
     Column {
-        for (row in 0 until rows) {
+        for (row in 0 until board.rows) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                for (column in 0 until columns) {
-                    val cell = cells[row][column]
+                for (column in 0 until board.columns) {
+                    val cell = board.cellAt(row, column)!!
                     CellView(cell)
                 }
             }

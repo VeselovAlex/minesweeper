@@ -17,16 +17,6 @@ import org.jetbrains.compose.common.ui.background
 import org.jetbrains.compose.common.ui.size
 import org.jetbrains.compose.common.ui.unit.dp
 
-
-@Composable
-actual fun CellImage(cell: Cell): Unit {
-    Image(
-        painter = painterResource("mine.png"),
-        contentDescription = "Bomb",
-        modifier = Modifier.fillMaxSize()
-    )
-}
-
 fun main() = application {
     Window(
         onCloseRequest = ::exitApplication
@@ -49,9 +39,7 @@ actual fun CellView(cell: Cell) {
         modifier = org.jetbrains.compose.common.ui.Modifier.size(32.dp, 32.dp)
             .background(color)
             .border(1.dp, Color.White)
-            .clickable {
-                cell.isOpened = true
-            }
+            .clickable { cell.open() }
     ) {
         if (cell.isOpened) {
             if (cell.hasBomb) {
