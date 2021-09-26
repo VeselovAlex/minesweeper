@@ -52,3 +52,28 @@ actual fun OpenedCell(cell: Cell) {
         Text(cell.bombsNear.toString())
     }
 }
+
+@Composable
+actual fun ClickableCell(
+    onLeftMouseButtonClick: () -> Unit,
+    onRightMouseButtonClick: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val buttonsLMBOnly: Short = 1
+    val buttonsRMBOnly: Short = 2
+
+    Div (
+        attrs = {
+            onClick {
+                when (it.buttons) {
+                    buttonsLMBOnly -> onLeftMouseButtonClick()
+                    buttonsRMBOnly -> onRightMouseButtonClick()
+                }
+            }
+            // Disable default context menu
+            onContextMenu { it.preventDefault() }
+        }
+    ) {
+        content()
+    }
+}

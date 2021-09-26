@@ -186,6 +186,13 @@ class GameStyles(
 }
 
 @Composable
+expect fun ClickableCell(
+    onLeftMouseButtonClick: () -> Unit,
+    onRightMouseButtonClick: () -> Unit,
+    content: @Composable () -> Unit
+)
+
+@Composable
 fun BoardView(game: GameController, styles: GameStyles) {
     Column  {
         for (row in 0 until game.rows) {
@@ -193,25 +200,26 @@ fun BoardView(game: GameController, styles: GameStyles) {
                 for (column in 0 until game.columns) {
                     val cell = game.cellAt(row, column)!!
 
-                    Box(
-                        modifier = Modifier.size(40.dp, 40.dp)
-                            .background(styles.getCellColor(cell))
-                            .border(1.dp, styles.borderColor)
-                            .clickable {
-                                game.openCell(cell)
-                            }
+                    ClickableCell(
+                        onLeftMouseButtonClick = { game.openCell(cell) },
+                        onRightMouseButtonClick = { game.toggleFlag(cell) }
                     ) {
-                        if (cell.isOpened) {
-                            if (cell.hasBomb) {
-                                Mine()
-                            } else if (cell.bombsNear > 0) {
-                                OpenedCell(cell)
+                        Box(
+                            modifier = Modifier.size(40.dp, 40.dp)
+                                .background(styles.getCellColor(cell))
+                                .border(1.dp, styles.borderColor)
+                        ) {
+                            if (cell.isOpened) {
+                                if (cell.hasBomb) {
+                                    Mine()
+                                } else if (cell.bombsNear > 0) {
+                                    OpenedCell(cell)
+                                }
+                            } else if (cell.isFlagged) {
+                                Flag()
                             }
-                        } else if (cell.isFlagged) {
-                            Flag()
                         }
                     }
-
                 }
             }
         }
