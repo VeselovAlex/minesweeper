@@ -162,47 +162,53 @@ expect fun OpenedCell(cell: Cell)
 expect fun CellWithIcon(src: String, alt: String)
 
 @Composable
-fun Mine(cell: Cell) {
+fun Mine() {
     CellWithIcon(src="assets/mine.png", alt = "Bomb")
 }
 
 @Composable
-fun Flag(cell: Cell) {
+fun Flag() {
     CellWithIcon(src="assets/flag.png", alt = "Flag")
 }
 
+class GameStyles(
+    val closedCellColor: Color,
+    val openedCellColor: Color,
+    val borderColor: Color
+) {
+    fun getCellColor(cell: Cell): Color {
+        if (cell.isOpened) {
+            return openedCellColor
+        } else {
+            return closedCellColor
+        }
+    }
+}
+
 @Composable
-fun BoardView(game: GameController) {
+fun BoardView(game: GameController, styles: GameStyles) {
     Column  {
         for (row in 0 until game.rows) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 for (column in 0 until game.columns) {
                     val cell = game.cellAt(row, column)!!
 
-                    val closedCellColor = Color.DarkGray
-                    val openedCellColor = Color.White
-                    val color = if (cell.isOpened) {
-                        openedCellColor
-                    } else {
-                        closedCellColor
-                    }
-
                     Box(
                         modifier = Modifier.size(40.dp, 40.dp)
-                            .background(color)
-                            .border(1.dp, Color(0xDD, 0xDD, 0xDD))
+                            .background(styles.getCellColor(cell))
+                            .border(1.dp, styles.borderColor)
                             .clickable {
                                 game.openCell(cell)
                             }
                     ) {
                         if (cell.isOpened) {
                             if (cell.hasBomb) {
-                                Mine(cell)
+                                Mine()
                             } else if (cell.bombsNear > 0) {
                                 OpenedCell(cell)
                             }
                         } else if (cell.isFlagged) {
-                            Flag(cell)
+                            Flag()
                         }
                     }
 
@@ -221,6 +227,11 @@ fun Game() = Column(Modifier.fillMaxWidth()) {
     val onWin = { message = "You win!" }
     val onLose = { message = "Try again" }
 
+    val styles = GameStyles(
+        openedCellColor = Color.White,
+        closedCellColor = Color.DarkGray,
+        borderColor = Color.LightGray
+    )
 
     fun newGame(rows: Int, columns: Int, mines: Int) {
         game = GameController(
@@ -231,13 +242,8 @@ fun Game() = Column(Modifier.fillMaxWidth()) {
     }
 
     Column {
-        Row {
-            val bombsLeft = game?.let {
-                max(it.bombs - it.flagsSet, 0)
-            }
-            Box {
-                Text("Bombs: ${bombsLeft}")
-            }
+        Column {
+            Box { Text("New Game") }
             Row {
                 Button(onClick = { newGame(9, 9, 10) }) {
                     Text("Easy")
@@ -249,15 +255,26 @@ fun Game() = Column(Modifier.fillMaxWidth()) {
                     Text("Expert")
                 }
             }
-            Box {
-                Text("Seconds: ${0}")
-            }
         }
         if (game != null) {
-            BoardView(game!!)
-        }
-        if (message != null) {
-            Text(message!!)
+            Row {
+                val bombsLeft = game?.let {
+                    max(it.bombs - it.flagsSet, 0)
+                }
+                Box {
+                    Text("Bombs: $bombsLeft")
+                }
+                Box {
+                    Text("Seconds: ${0}")
+                }
+            }
+
+            BoardView(game!!, styles)
+            if (message != null) {
+                Box {
+                    Text(message!!)
+                }
+            }
         }
     }
 }
