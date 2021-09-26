@@ -3,7 +3,6 @@ package com.github.veselovalex.minesweeper
 import androidx.compose.runtime.*
 import org.jetbrains.compose.common.core.graphics.Color
 import org.jetbrains.compose.common.foundation.border
-import org.jetbrains.compose.common.foundation.clickable
 import org.jetbrains.compose.common.foundation.layout.Box
 import org.jetbrains.compose.common.foundation.layout.Column
 import org.jetbrains.compose.common.foundation.layout.Row
@@ -34,12 +33,19 @@ class GameController(private val options: GameSettings, private val onWin: () ->
         get() = options.columns
     val bombs: Int
         get() = options.mines
-    var running by mutableStateOf(true)
+    var running by mutableStateOf(false)
+        private set
+    var finished by mutableStateOf(false)
         private set
     var flagsSet by mutableStateOf(0)
         private set
     var cellsToOpen by mutableStateOf(options.rows * options.columns - options.mines)
         private set
+    var seconds by mutableStateOf(0)
+        private set
+
+    private var time = 0L
+    private var startTime = 0L
 
     private val cells = Array(options.rows) { row ->
         Array(options.columns) { column ->
@@ -56,7 +62,10 @@ class GameController(private val options: GameSettings, private val onWin: () ->
     fun cellAt(row: Int, column: Int) = cells.getOrNull(row)?.getOrNull(column)
 
     fun openCell(cell: Cell) {
-        if (!running || cell.isOpened || cell.isFlagged) return
+        if (finished || cell.isOpened || cell.isFlagged) return
+        if (!running) {
+            startGame()
+        }
 
         cell.isOpened = true
         if (cell.hasBomb) {
@@ -77,13 +86,23 @@ class GameController(private val options: GameSettings, private val onWin: () ->
     }
 
     fun toggleFlag(cell: Cell) {
-        if (!running || cell.isOpened) return
+        if (finished || cell.isOpened) return
+        if (!running) {
+            startGame()
+        }
 
         cell.isFlagged = !cell.isFlagged
         if (cell.isFlagged) {
             flagsSet += 1
         } else {
             flagsSet -= 1
+        }
+    }
+
+    fun onTimeTick(timeMillis: Long) {
+        time = timeMillis
+        if (running) {
+            seconds = ((time - startTime) / 1000L).toInt()
         }
     }
 
@@ -151,7 +170,16 @@ class GameController(private val options: GameSettings, private val onWin: () ->
     }
 
     private fun endGame() {
+        finished = true
         running = false
+    }
+
+    private fun startGame() {
+        if (!finished) {
+            seconds = 0
+            startTime = time
+            running = true
+        }
     }
 }
 
@@ -177,10 +205,10 @@ class GameStyles(
     val borderColor: Color
 ) {
     fun getCellColor(cell: Cell): Color {
-        if (cell.isOpened) {
-            return openedCellColor
+        return if (cell.isOpened) {
+            openedCellColor
         } else {
-            return closedCellColor
+            closedCellColor
         }
     }
 }
@@ -247,6 +275,7 @@ fun Game() = Column(Modifier.fillMaxWidth()) {
             onWin,
             onLose
         )
+        message = null
     }
 
     Column {
@@ -273,7 +302,7 @@ fun Game() = Column(Modifier.fillMaxWidth()) {
                     Text("Bombs: $bombsLeft")
                 }
                 Box {
-                    Text("Seconds: ${0}")
+                    Text("Seconds: ${game!!.seconds}")
                 }
             }
 
@@ -281,6 +310,16 @@ fun Game() = Column(Modifier.fillMaxWidth()) {
             if (message != null) {
                 Box {
                     Text(message!!)
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            withFrameMillis {
+                game?.apply {
+                    onTimeTick(it)
                 }
             }
         }
