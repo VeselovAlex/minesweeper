@@ -23,7 +23,6 @@ fun main() {
 actual fun CellWithIcon(src: String, alt: String) {
     Img(src, alt, attrs = {
         style {
-            cursor("none")
             property("user-select", "none")
             margin(4.px)
         }
@@ -41,7 +40,6 @@ actual fun OpenedCell(cell: Cell) {
                 fontWeight("bold")
                 fontFamily("sans-serif")
                 textAlign("center")
-                cursor("pointer")
                 width(32.px)
                 height(32.px)
                 boxSizing("border-box")
@@ -59,19 +57,21 @@ actual fun ClickableCell(
     onRightMouseButtonClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
-    val buttonsLMBOnly: Short = 1
-    val buttonsRMBOnly: Short = 2
-
     Div (
         attrs = {
             onClick {
-                when (it.buttons) {
-                    buttonsLMBOnly -> onLeftMouseButtonClick()
-                    buttonsRMBOnly -> onRightMouseButtonClick()
-                }
+                it.preventDefault()
+                onLeftMouseButtonClick()
             }
-            // Disable default context menu
-            onContextMenu { it.preventDefault() }
+            onContextMenu {
+                // Handle right mouse button click
+                // Disable default context menu
+                it.preventDefault()
+                onRightMouseButtonClick()
+            }
+            style {
+                cursor("pointer")
+            }
         }
     ) {
         content()
