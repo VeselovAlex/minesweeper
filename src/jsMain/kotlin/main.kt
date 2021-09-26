@@ -53,7 +53,7 @@ actual fun OpenedCell(cell: Cell) {
 
 @Composable
 actual fun ClickableCell(
-    onLeftMouseButtonClick: () -> Unit,
+    onLeftMouseButtonClick: (isShiftPressed: Boolean) -> Unit,
     onRightMouseButtonClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
@@ -61,7 +61,7 @@ actual fun ClickableCell(
         attrs = {
             onClick {
                 it.preventDefault()
-                onLeftMouseButtonClick()
+                onLeftMouseButtonClick(it.shiftKey)
             }
             onContextMenu {
                 // Handle right mouse button click

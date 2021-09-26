@@ -53,7 +53,7 @@ actual fun OpenedCell(cell: Cell) {
 @OptIn(ExperimentalDesktopApi::class)
 @Composable
 actual fun ClickableCell(
-    onLeftMouseButtonClick: () -> Unit,
+    onLeftMouseButtonClick: (isShiftPressed: Boolean) -> Unit,
     onRightMouseButtonClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
@@ -64,7 +64,7 @@ actual fun ClickableCell(
                 val rmb = buttons.isSecondaryPressed
 
                 if (lmb && !rmb) {
-                    onLeftMouseButtonClick()
+                    onLeftMouseButtonClick(keyboardModifiers.isShiftPressed)
                 } else if (rmb && !lmb) {
                     onRightMouseButtonClick()
                 }

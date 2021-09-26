@@ -48,7 +48,7 @@ class GameStyles(
 
 @Composable
 expect fun ClickableCell(
-    onLeftMouseButtonClick: () -> Unit,
+    onLeftMouseButtonClick: (isShiftPressed: Boolean) -> Unit,
     onRightMouseButtonClick: () -> Unit,
     content: @Composable () -> Unit
 )
@@ -62,7 +62,15 @@ fun BoardView(game: GameController, styles: GameStyles) {
                     val cell = game.cellAt(row, column)!!
 
                     ClickableCell(
-                        onLeftMouseButtonClick = { game.openCell(cell) },
+                        onLeftMouseButtonClick = { shift ->
+                            // It seems to be hard to implement traditional LMB + RMB click
+                            // activation of mine seeker, so let it run on Shift + Click
+                            if (shift) {
+                                game.openNotFlaggedNeighbors(cell)
+                            } else {
+                                game.openCell(cell)
+                            }
+                         },
                         onRightMouseButtonClick = { game.toggleFlag(cell) }
                     ) {
                         Box(

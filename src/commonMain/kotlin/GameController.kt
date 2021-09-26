@@ -103,6 +103,16 @@ class GameController(private val options: GameSettings, private val onWin: (() -
         }
     }
 
+    fun openNotFlaggedNeighbors(cell: Cell) {
+        if (finished || !cell.isOpened || cell.bombsNear == 0) return
+
+        val neighbors = neighborsOf(cell)
+        val flagsNear = neighbors.count() { it.isFlagged }
+        if (cell.bombsNear == flagsNear) {
+            neighbors.forEach { openCell(it) }
+        }
+    }
+
     fun onTimeTick(timeMillis: Long) {
         time = timeMillis
         if (running) {
