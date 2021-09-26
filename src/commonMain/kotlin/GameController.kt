@@ -5,9 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlin.random.Random
 
-class GameController(private val options: GameSettings, private val onWin: () -> Unit, private val onLose: () -> Unit) {
+class GameController(private val options: GameSettings, private val onWin: (() -> Unit)? = null, private val onLose: (() -> Unit)? = null) {
     val rows: Int
-        get() = options.rows;
+        get() = options.rows
     val columns: Int
         get() = options.columns
     val bombs: Int
@@ -38,6 +38,30 @@ class GameController(private val options: GameSettings, private val onWin: () ->
         }
     }
 
+    constructor(
+        rows: Int,
+        columns: Int,
+        mines: Collection<Pair<Int, Int>>,
+        onWin: (() -> Unit)? = null,
+        onLose: (() -> Unit)? = null
+    ) : this(GameSettings(rows, columns, mines.size), onWin, onLose)  {
+        for (row in cells) {
+            for (cell in row) {
+                cell.hasBomb = false
+                cell.bombsNear = 0
+            }
+        }
+
+        for ((row, column) in mines) {
+            cellAt(row, column)?.apply {
+                hasBomb = true
+                neighborsOf(this).forEach {
+                    it.bombsNear += 1
+                }
+            }
+        }
+    }
+
     fun cellAt(row: Int, column: Int) = cells.getOrNull(row)?.getOrNull(column)
 
     fun openCell(cell: Cell) {
@@ -51,16 +75,17 @@ class GameController(private val options: GameSettings, private val onWin: () ->
             lose()
             return
         }
+
         cellsToOpen -= 1
+        if (cellsToOpen == 0) {
+            win()
+            return
+        }
 
         if (cell.bombsNear == 0) {
             neighborsOf(cell).forEach {
                 openCell(it)
             }
-        }
-
-        if (cellsToOpen == 0) {
-            win()
         }
     }
 
@@ -123,7 +148,7 @@ class GameController(private val options: GameSettings, private val onWin: () ->
     private fun neighborsOf(cell: Cell): List<Cell> = neighborsOf(cell.row, cell.column)
 
     private fun neighborsOf(row: Int, column: Int): List<Cell> {
-        var result = mutableListOf<Cell>();
+        val result = mutableListOf<Cell>()
         cellAt(row - 1, column - 1)?.let { result.add(it) }
         cellAt(row - 1, column)?.let { result.add(it) }
         cellAt(row - 1, column + 1)?.let { result.add(it) }
@@ -139,13 +164,13 @@ class GameController(private val options: GameSettings, private val onWin: () ->
     private fun win() {
         endGame()
         flagAllBombs()
-        onWin()
+        onWin?.invoke()
     }
 
     private fun lose() {
         endGame()
         openAllBombs()
-        onLose()
+        onLose?.invoke()
     }
 
     private fun endGame() {
@@ -158,6 +183,26 @@ class GameController(private val options: GameSettings, private val onWin: () ->
             seconds = 0
             startTime = time
             running = true
+        }
+    }
+
+    override fun toString(): String {
+        return buildString {
+            for (row in cells) {
+                for (cell in row) {
+                    if (cell.hasBomb) {
+                        append('*')
+                    } else if (cell.isFlagged) {
+                        append('!')
+                    } else if (cell.bombsNear > 0) {
+                        append(cell.bombsNear)
+                    } else {
+                        append(' ')
+                    }
+                }
+                append('\n')
+            }
+            deleteAt(length - 1)
         }
     }
 }
