@@ -1,5 +1,6 @@
 package com.github.veselovalex.minesweeper
 
+import androidx.compose.desktop.DesktopMaterialTheme
 import androidx.compose.foundation.ExperimentalDesktopApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -10,22 +11,33 @@ import androidx.compose.foundation.mouseClickable
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.application
+import androidx.compose.ui.window.*
 
 fun main() = application {
+    val windowState = rememberWindowState()
+
     Window(
         onCloseRequest = ::exitApplication,
+        resizable = false,
+        title = "Minesweeper",
+        icon = painterResource("assets/mine.png"),
+        state = windowState
     ) {
-        MaterialTheme {
-            Game()
+        DesktopMaterialTheme {
+            Game(
+                requestWindowSize = { w, h ->
+                    windowState.size = windowState.size.copy(width = w.dp, height = h.dp)
+                }
+            )
         }
     }
 }
@@ -45,7 +57,7 @@ actual fun OpenedCell(cell: Cell) {
         text = cell.bombsNear.toString(),
         textAlign = TextAlign.Center,
         fontWeight = FontWeight.Bold,
-        fontSize = 28.sp,
+        fontSize = 22.sp,
         modifier = Modifier.fillMaxSize()
     )
 }

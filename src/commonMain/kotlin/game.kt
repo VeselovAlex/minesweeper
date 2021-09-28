@@ -3,17 +3,13 @@ package com.github.veselovalex.minesweeper
 import androidx.compose.runtime.*
 import org.jetbrains.compose.common.core.graphics.Color
 import org.jetbrains.compose.common.foundation.border
-import org.jetbrains.compose.common.foundation.layout.Box
-import org.jetbrains.compose.common.foundation.layout.Column
-import org.jetbrains.compose.common.foundation.layout.Row
-import org.jetbrains.compose.common.foundation.layout.fillMaxWidth
-import org.jetbrains.compose.common.material.Button
+import org.jetbrains.compose.common.foundation.clickable
+import org.jetbrains.compose.common.foundation.layout.*
 import org.jetbrains.compose.common.material.Text
-import org.jetbrains.compose.common.ui.Alignment
-import org.jetbrains.compose.common.ui.Modifier
-import org.jetbrains.compose.common.ui.background
-import org.jetbrains.compose.common.ui.size
+import org.jetbrains.compose.common.ui.*
+import org.jetbrains.compose.common.ui.unit.Dp
 import org.jetbrains.compose.common.ui.unit.dp
+import org.jetbrains.compose.common.ui.unit.sp
 import kotlin.math.max
 
 @Composable
@@ -35,7 +31,9 @@ fun Flag() {
 class GameStyles(
     val closedCellColor: Color,
     val openedCellColor: Color,
-    val borderColor: Color
+    val borderColor: Color,
+    val cellSize: Dp,
+    val cellBorderWidth: Dp
 ) {
     fun getCellColor(cell: Cell): Color {
         return if (cell.isOpened) {
@@ -55,7 +53,7 @@ expect fun ClickableCell(
 
 @Composable
 fun BoardView(game: GameController, styles: GameStyles) {
-    Column  {
+    Column {
         for (row in 0 until game.rows) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 for (column in 0 until game.columns) {
@@ -74,9 +72,9 @@ fun BoardView(game: GameController, styles: GameStyles) {
                         onRightMouseButtonClick = { game.toggleFlag(cell) }
                     ) {
                         Box(
-                            modifier = Modifier.size(40.dp, 40.dp)
+                            modifier = Modifier.size(styles.cellSize, styles.cellSize)
                                 .background(styles.getCellColor(cell))
-                                .border(1.dp, styles.borderColor)
+                                .border(styles.cellBorderWidth, styles.borderColor)
                         ) {
                             if (cell.isOpened) {
                                 if (cell.hasBomb) {
@@ -96,71 +94,130 @@ fun BoardView(game: GameController, styles: GameStyles) {
 }
 
 @Composable
-fun Game() = Column(Modifier.fillMaxWidth()) {
-    var message by remember { mutableStateOf<String?>(null) }
-    var game by remember { mutableStateOf<GameController?>(null) }
+fun IndicatorWithIcon(iconPath: String, alt: String, value: Int) {
+    Row (modifier = Modifier.background(Color(0x8e, 0x6e, 0x0e)), verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.size(40.dp, 40.dp)) {
+            CellWithIcon(iconPath, alt)
+        }
 
-    val onWin = { message = "You win!" }
-    val onLose = { message = "Try again" }
+        Box(modifier = Modifier.size(56.dp, 36.dp)) {
+            Text(
+                text = value.toString(),
+                size = 24.sp,
+                color = Color.White
+            )
+        }
+    }
+}
 
+@Composable
+fun NewGameButton(text: String, onClick: () -> Unit) {
+    Box (
+        Modifier
+            .background(Color(0x42, 0x8e, 0x04))
+            .border(1.dp, Color.White)
+            .clickable(onClick)
+    ) {
+        Text (
+            modifier = Modifier.padding(4.dp),
+            text = text,
+            size = 18.sp,
+            color = Color.White
+        )
+    }
+}
+
+@Composable
+fun Game(requestWindowSize: ((width: Int, height: Int) -> Unit)? = null) = Column {
+    val windowPadding = 8.dp
+    val boardBorderWidth = 1.dp
+    val boardPadding = 4.dp
+    val extraVerticalSpace = 152.dp // This should give enough space to UI widgets
     val styles = GameStyles(
         openedCellColor = Color.White,
         closedCellColor = Color.DarkGray,
-        borderColor = Color.LightGray
+        borderColor = Color.LightGray,
+        cellSize = 32.dp,
+        cellBorderWidth = 1.dp
     )
 
-    fun newGame(rows: Int, columns: Int, mines: Int) {
-        game = GameController(
-            options = GameSettings(rows, columns, mines),
-            onWin,
-            onLose
-        )
+    val difficulty = object {
+        val EASY = GameSettings(9, 9, 10)
+        val MEDIUM = GameSettings(16, 16, 40)
+        val EXPERT = GameSettings(16, 30, 99)
+    }
+
+    var message by remember { mutableStateOf<String?>(null) }
+    val onWin = { message = "You win!" }
+    val onLose = { message = "Try again" }
+
+    var game by remember { mutableStateOf(GameController(difficulty.EASY, onWin, onLose)) }
+
+    fun updateWindowSize() {
+        if (requestWindowSize != null) {
+            val boardOffset = (windowPadding.value + boardBorderWidth.value + boardPadding.value + 1.0f) * 2.0f;
+            val cellsWidth = { count: Int -> count.toFloat() * (styles.cellSize.value) + 10.0f  }
+
+            val width = boardOffset + cellsWidth(game.columns)
+            val height = boardOffset + cellsWidth(game.rows) + extraVerticalSpace.value
+
+            requestWindowSize(width.toInt(), height.toInt())
+        }
+    }
+
+    fun newGame(difficulty: GameSettings) {
+        game = GameController(options = difficulty, onWin, onLose)
         message = null
     }
 
-    Column {
-        Column {
-            Box { Text("New Game") }
-            Row {
-                Button(onClick = { newGame(9, 9, 10) }) {
-                    Text("Easy")
+    updateWindowSize() // TODO this calls resize twice, how can we avoid this?
+
+    Column (
+        modifier = Modifier
+            .background(Color(0xed, 0x9c, 0x38))
+            .padding(windowPadding)
+    ) {
+        // Controls
+        Row {
+            Column {
+                val bombsLeft = max(game.bombs - game.flagsSet, 0)
+                IndicatorWithIcon("assets/mine.png", "Seconds", game.seconds)
+                Box(modifier = Modifier.size(2.dp)) {}
+                IndicatorWithIcon("assets/mine.png", "Bombs Left", bombsLeft)
+            }
+
+            Column(modifier = Modifier.padding(8.dp)) {
+                Box {
+                    Text(text = "New Game", size = 20.sp)
                 }
-                Button(onClick = { newGame(16, 16, 40) }) {
-                    Text("Medium")
-                }
-                Button(onClick = { newGame(16, 30, 99) }) {
-                    Text("Expert")
+                Row {
+                    NewGameButton("Easy") { newGame(difficulty.EASY) }
+                    NewGameButton("Medium") { newGame(difficulty.MEDIUM) }
+                    NewGameButton("Hard") { newGame(difficulty.EXPERT) }
                 }
             }
         }
-        if (game != null) {
-            Row {
-                val bombsLeft = game?.let {
-                    max(it.bombs - it.flagsSet, 0)
-                }
-                Box {
-                    Text("Bombs: $bombsLeft")
-                }
-                Box {
-                    Text("Seconds: ${game!!.seconds}")
-                }
-            }
 
-            BoardView(game!!, styles)
+        // Spacer
+        Box(modifier = Modifier.size(8.dp)) {}
+
+        // Status
+        Box(modifier = Modifier.padding(4.dp).size(200.dp, 32.dp)) {
             if (message != null) {
-                Box {
-                    Text(message!!)
-                }
+                Text(message!!)
             }
+        }
+
+        // Cells
+        Box (modifier = Modifier.border(boardBorderWidth, Color.White).padding(boardPadding)) {
+            BoardView(game, styles)
         }
     }
 
     LaunchedEffect(Unit) {
         while (true) {
             withFrameMillis {
-                game?.apply {
-                    onTimeTick(it)
-                }
+                game.onTimeTick(it)
             }
         }
     }
