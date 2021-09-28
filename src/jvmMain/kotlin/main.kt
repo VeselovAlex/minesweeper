@@ -1,19 +1,18 @@
 package com.github.veselovalex.minesweeper
 
 import androidx.compose.desktop.DesktopMaterialTheme
-import androidx.compose.foundation.ExperimentalDesktopApi
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.mouseClickable
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -21,6 +20,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.*
+import org.jetbrains.compose.common.foundation.border
+import org.jetbrains.compose.common.foundation.clickable
+import org.jetbrains.compose.common.ui.background
+import org.jetbrains.compose.common.ui.padding
 
 fun main() = application {
     val windowState = rememberWindowState()
@@ -60,6 +63,22 @@ actual fun OpenedCell(cell: Cell) {
         fontSize = 22.sp,
         modifier = Modifier.fillMaxSize()
     )
+}
+
+@Composable
+actual fun NewGameButton(text: String, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .background(color = Color(0x42, 0x8e, 0x04))
+            .border(width = 1.dp,  color = Color.White)
+            .clickable { onClick() }
+    ) {
+        Text(text,
+            fontSize = 18.sp,
+            color = Color.White,
+            modifier = Modifier.padding(4.dp)
+        )
+    }
 }
 
 @OptIn(ExperimentalDesktopApi::class)

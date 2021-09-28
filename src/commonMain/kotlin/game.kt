@@ -3,7 +3,6 @@ package com.github.veselovalex.minesweeper
 import androidx.compose.runtime.*
 import org.jetbrains.compose.common.core.graphics.Color
 import org.jetbrains.compose.common.foundation.border
-import org.jetbrains.compose.common.foundation.clickable
 import org.jetbrains.compose.common.foundation.layout.*
 import org.jetbrains.compose.common.material.Text
 import org.jetbrains.compose.common.ui.*
@@ -95,37 +94,25 @@ fun BoardView(game: GameController, styles: GameStyles) {
 
 @Composable
 fun IndicatorWithIcon(iconPath: String, alt: String, value: Int) {
-    Row (modifier = Modifier.background(Color(0x8e, 0x6e, 0x0e)), verticalAlignment = Alignment.CenterVertically) {
-        Box(modifier = Modifier.size(40.dp, 40.dp)) {
-            CellWithIcon(iconPath, alt)
-        }
+    Box (modifier = Modifier.background(Color(0x8e, 0x6e, 0x0e))) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(modifier = Modifier.size(40.dp, 40.dp)) {
+                CellWithIcon(iconPath, alt)
+            }
 
-        Box(modifier = Modifier.size(56.dp, 36.dp)) {
-            Text(
-                text = value.toString(),
-                size = 24.sp,
-                color = Color.White
-            )
+            Box(modifier = Modifier.size(56.dp, 36.dp)) {
+                Text(
+                    text = value.toString(),
+                    size = 24.sp,
+                    color = Color.White
+                )
+            }
         }
     }
 }
 
 @Composable
-fun NewGameButton(text: String, onClick: () -> Unit) {
-    Box (
-        Modifier
-            .background(Color(0x42, 0x8e, 0x04))
-            .border(1.dp, Color.White)
-            .clickable(onClick)
-    ) {
-        Text (
-            modifier = Modifier.padding(4.dp),
-            text = text,
-            size = 18.sp,
-            color = Color.White
-        )
-    }
-}
+expect fun NewGameButton(text: String, onClick: () -> Unit)
 
 @Composable
 fun Game(requestWindowSize: ((width: Int, height: Int) -> Unit)? = null) = Column {
@@ -155,7 +142,7 @@ fun Game(requestWindowSize: ((width: Int, height: Int) -> Unit)? = null) = Colum
 
     fun updateWindowSize() {
         if (requestWindowSize != null) {
-            val boardOffset = (windowPadding.value + boardBorderWidth.value + boardPadding.value + 1.0f) * 2.0f;
+            val boardOffset = (windowPadding.value + boardBorderWidth.value + boardPadding.value + 1.0f) * 2.0;
             val cellsWidth = { count: Int -> count.toFloat() * (styles.cellSize.value) + 10.0f  }
 
             val width = boardOffset + cellsWidth(game.columns)

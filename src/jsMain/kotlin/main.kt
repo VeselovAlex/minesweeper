@@ -3,6 +3,7 @@ package com.github.veselovalex.minesweeper
 import androidx.compose.runtime.Composable
 import kotlinx.browser.document
 import org.jetbrains.compose.web.css.*
+import org.jetbrains.compose.web.dom.Button
 import org.jetbrains.compose.web.dom.Div
 import org.jetbrains.compose.web.dom.Img
 import org.jetbrains.compose.web.dom.Text
@@ -24,7 +25,9 @@ actual fun CellWithIcon(src: String, alt: String) {
     Img(src, alt, attrs = {
         style {
             property("user-select", "none")
-            margin(4.px)
+            margin(2.px)
+            width(28.px)
+            height(28.px)
         }
     })
 }
@@ -35,15 +38,15 @@ actual fun OpenedCell(cell: Cell) {
         attrs = {
             style {
                 property("user-select", "none")
-                fontSize(32.px)
+                fontSize(28.px)
                 lineHeight("1")
                 fontWeight("bold")
                 fontFamily("sans-serif")
                 textAlign("center")
-                width(32.px)
-                height(32.px)
+                width(28.px)
+                height(28.px)
                 boxSizing("border-box")
-                margin(4.px)
+                margin(2.px)
             }
         }
     ) {
@@ -71,9 +74,30 @@ actual fun ClickableCell(
             }
             style {
                 cursor("pointer")
+                boxSizing("border-box")
             }
         }
     ) {
         content()
+    }
+}
+
+@Composable
+actual fun NewGameButton(text: String, onClick: () -> Unit) {
+    Button (
+        attrs = {
+            style {
+                background("green")
+                color(Color.white)
+                font("18px/1 sans-serif")
+                cursor("pointer")
+                padding(4.px, 8.px)
+                border(1.px, LineStyle.Solid, Color.white)
+            }
+
+            onClick { it.preventDefault(); onClick() }
+        }
+    ) {
+        Text(text)
     }
 }
