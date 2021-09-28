@@ -6,26 +6,37 @@ import androidx.compose.runtime.setValue
 import kotlin.random.Random
 
 class GameController(private val options: GameSettings, private val onWin: (() -> Unit)? = null, private val onLose: (() -> Unit)? = null) {
+    /** Number of rows in current board */
     val rows: Int
         get() = options.rows
+    /** Number of columns in current board */
     val columns: Int
         get() = options.columns
+    /** Number of bombs in current board */
     val bombs: Int
         get() = options.mines
+    /** True if current game has started, false if game is finished or until first cell is opened or flagged */
     var running by mutableStateOf(false)
         private set
+    /** True if game is ended (win or lose) */
     var finished by mutableStateOf(false)
         private set
+    /** Total number of flags set on cells, used for calculation of number of remaining bombs */
     var flagsSet by mutableStateOf(0)
         private set
+    /** Number of remaining cells */
     var cellsToOpen by mutableStateOf(options.rows * options.columns - options.mines)
         private set
+    /** Game timer, increments every second while game is running */
     var seconds by mutableStateOf(0)
         private set
 
+    /** Global monotonic time, updated with [onTimeTick] */
     private var time = 0L
+    /** The time when user starts the game by opening or flagging any cell */
     private var startTime = 0L
 
+    /** The game board of size (rows * columns) */
     private val cells = Array(options.rows) { row ->
         Array(options.columns) { column ->
             Cell(row, column)
@@ -33,11 +44,15 @@ class GameController(private val options: GameSettings, private val onWin: (() -
     }
 
     init {
+        // Put [options.mines] bombs on random positions
         for (i in 1..options.mines) {
             putBomb()
         }
     }
 
+    /**
+     * Constructor with predefined positions of mines, used for testing purposes
+     */
     constructor(
         rows: Int,
         columns: Int,
@@ -62,8 +77,22 @@ class GameController(private val options: GameSettings, private val onWin: (() -
         }
     }
 
+    /**
+     * Get cell at given position, or null if any index is out of bounds
+     */
     fun cellAt(row: Int, column: Int) = cells.getOrNull(row)?.getOrNull(column)
 
+    /**
+     * Open given cell:
+     * - If cell is opened or flagged, or game is finished, does nothing
+     * - If cell contains bomb, opens it and stops the game (lose)
+     * - If cell has no bombs around int, recursively opens cells around current
+     *
+     * When cell opens, decrements [cellsToOpen],
+     * if it becomes zero, stops the game (win). First call starts the game.
+     *
+     * @param cell Cell to open, **must** belong to current game board
+     */
     fun openCell(cell: Cell) {
         if (finished || cell.isOpened || cell.isFlagged) return
         if (!running) {
@@ -89,6 +118,14 @@ class GameController(private val options: GameSettings, private val onWin: (() -
         }
     }
 
+    /**
+     * Sets or drops flag on given [cell]. Flagged cell can not be opened until flag drop
+     * If game is finished, or cell is opened, does nothing. First call starts the game.
+     *
+     * Setting flag increments [flagsSet], dropping - decrements
+     *
+     * @param cell Cell to toggle flag, **must** belong to current game board
+     */
     fun toggleFlag(cell: Cell) {
         if (finished || cell.isOpened) return
         if (!running) {
@@ -103,6 +140,16 @@ class GameController(private val options: GameSettings, private val onWin: (() -
         }
     }
 
+    /**
+     * Mine seeker functionality
+     *
+     * When called on opened cell with at least one bomb near it, and if number of flags around cell
+     * is the same as number of bombs, opens all cells around given with [openCell].
+     *
+     * If game is finished, or cell does not meet the requirements above, does nothing
+     *
+     * @param cell Cell to toggle flag, **must** belong to current game board
+     */
     fun openNotFlaggedNeighbors(cell: Cell) {
         if (finished || !cell.isOpened || cell.bombsNear == 0) return
 
@@ -113,6 +160,12 @@ class GameController(private val options: GameSettings, private val onWin: (() -
         }
     }
 
+    /**
+     * Provides current **monotonic** time to game
+     * Should be called in timer loop
+     *
+     * @param timeMillis Current time in milliseconds
+     */
     fun onTimeTick(timeMillis: Long) {
         time = timeMillis
         if (running) {
@@ -123,7 +176,7 @@ class GameController(private val options: GameSettings, private val onWin: (() -
     private fun putBomb() {
         var cell: Cell
         do {
-            // This strategy may create infinite loop, but for simplicity we can assume
+            // This strategy can create infinite loop, but for simplicity we can assume
             // that mine count is small enough
             val random = Random.nextInt(options.rows * options.columns)
             cell = cells[random / columns][random % columns]
